@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Camera Live Stream</title>
+</head>
+<body>
+    <h1>Live Camera Stream</h1>
+    <video id="local-video" width="320" height="240" autoplay muted></video>
+    <video id="remote-video" width="320" height="240" autoplay></video>
+    <button id="start-button">Start Streaming</button>
+
+    <script>
+        let localStream;
+        let remoteStream;
+
+        const localVideo = document.getElementById('local-video');
+        const remoteVideo = document.getElementById('remote-video');
+        const startButton = document.getElementById('start-button');
+
+        async function startCamera() {
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                localVideo.srcObject = localStream;
+            } catch (error) {
+                console.error('Error accessing camera:', error);
+            }
+        }
+
+        startButton.addEventListener('click', () => {
+            startCamera();
+            startButton.disabled = true;
+            startWebRTC();
+        });
+
+        async function startWebRTC() {
+            const configuration = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+            const peerConnection = new RTCPeerConnection(configuration);
+
+            localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+            peerConnection.onicecandidate = event => {
+                if (event.candidate) {
+                    // Truyền thông tin ice candidate đến thiết bị khác
+                }
+            };
+
+            peerConnection.ontrack = event => {
+                remoteStream = event.streams[0];
+                remoteVideo.srcObject = remoteStream;
+            };
+        }
+    </script>
+</body>
+</html>
